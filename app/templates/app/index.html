@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Voice Assistant</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 30px auto;
+            text-align: center;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            margin: 10px;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        audio {
+            margin-top: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎙️ Urdu Voice Assistant</h2>
+
+    <button id="recordBtn">🎤 Start Recording</button>
+    <p id="status">Click to start</p>
+
+    <h3>Question:</h3>
+    <p id="question">—</p>
+
+    <h3>Answer:</h3>
+    <p id="answer">—</p>
+
+    <audio id="audioPlayer" controls></audio>
+
+    <script>
+        const recordBtn = document.getElementById("recordBtn");
+        const status = document.getElementById("status");
+        const questionEl = document.getElementById("question");
+        const answerEl = document.getElementById("answer");
+        const audioPlayer = document.getElementById("audioPlayer");
+
+        let mediaRecorder;
+        let audioChunks = [];
+
+        recordBtn.onclick = async () => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                status.textContent = "⏹️ Stopped recording...";
+                recordBtn.textContent = "🎤 Start Recording";
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => {
+                    audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const formData = new FormData();
+                    formData.append("audio", audioBlob, "voice.wav");
+
+                    status.textContent = "⏳ Uploading...";
+                    
+                    const response = await fetch("/voice/", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        status.textContent = "❌ " + data.error;
+                        return;
+                    }
+
+                    questionEl.textContent = data.question;
+                    answerEl.textContent = data.answer;
+                    status.textContent = "✅ Answer received";
+
+                    const audioBase64 = data.audio_base64;
+                    audioPlayer.src = "data:audio/mp3;base64," + audioBase64;
+                    audioPlayer.play();
+                };
+
+                mediaRecorder.start();
+                status.textContent = "🎙️ Recording... Click again to stop.";
+                recordBtn.textContent = "⏹️ Stop Recording";
+
+            } catch (err) {
+                status.textContent = "❌ Error: " + err.message;
+            }
+        };
+    </script>
+</body>
+</html>

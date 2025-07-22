@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <title>اردو وائس اسسٹنٹ</title>
+</head>
+<body>
+    <h2>🔍 اردو سوال لکھیں:</h2>
+    <form id="queryForm">
+        <input type="text" id="query" placeholder="آپ کا سوال" style="width: 300px;" required>
+        <button type="submit">🔊 سنیں</button>
+    </form>
+
+    <div id="audioContainer" style="margin-top: 20px;"></div>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const query = document.getElementById('query').value;
+            fetch(`/get-audio/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const audioPath = data.audio.replace(/\\/g, "/");  // Windows path fix
+                    const fullUrl = `${window.location.origin}/${audioPath}`;
+
+                    const audioContainer = document.getElementById('audioContainer');
+                    audioContainer.innerHTML = `<audio controls autoplay src="${fullUrl}"></audio>`;
+                })
+                .catch(err => {
+                    alert("❌ کوئی مسئلہ ہوا۔");
+                    console.error(err);
+                });
+        });
+    </script>
+</body>
+</html>

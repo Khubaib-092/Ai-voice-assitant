@@ -1,0 +1,2 @@
+PS C:\Users\Administrator\Desktop\Django\Ai call Assistant\assistant\assist> python scripts/test_simulator.py  # to talk with Ai model
+python C:\Users\Administrator\Desktop\stealth.py
